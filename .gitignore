@@ -1,0 +1,25 @@
+# Compiled classes & build output
+bin/
+*.class
+
+# Databases & local runtime data
+*.db
+*.mv.db
+*.trace.db
+*.tmp
+*.ser
+
+# IDE configurations
+.settings/
+.project
+.classpath
+.vscode/
+.idea/
+*.iml
+
+# Swarm / Ruflo caches
+.swarm/
+
+# OS specific
+Thumbs.db
+.DS_Store
