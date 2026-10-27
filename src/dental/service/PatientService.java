@@ -8,7 +8,12 @@ import dental.functional.Validateur;
 import dental.functional.Validateurs;
 import dental.model.Patient;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /**
  * Service métier pour la gestion des patients.
@@ -142,5 +147,92 @@ public class PatientService {
         } catch (SQLException e) {
             throw new DentalException("Erreur lors de la recherche des patients : " + e.getMessage(), e);
         }
+    }
+
+    // =========================================================================
+    // ÉTAPE 6 : INTERFACES FONCTIONNELLES PRÉ-DÉFINIES (java.util.function)
+    // =========================================================================
+
+    /**
+     * 1. Utilisation de Predicate<T> :
+     * Filtre la liste des patients selon un critère booléen passé sous forme d'expression lambda.
+     * Démonstration de l'interface fonctionnelle standard java.util.function.Predicate.
+     *
+     * @param filtre prédicat déterminant si un patient doit être conservé
+     * @return la liste filtrée
+     */
+    public List<Patient> filtrerPatients(Predicate<Patient> filtre) throws DentalException {
+        List<Patient> tous = obtenirTousLesPatients();
+        List<Patient> resultat = new ArrayList<>();
+
+        if (filtre == null) {
+            return tous;
+        }
+
+        for (Patient p : tous) {
+            // Appel de la méthode SAM de Predicate : boolean test(T t)
+            if (filtre.test(p)) {
+                resultat.add(p);
+            }
+        }
+        return resultat;
+    }
+
+    /**
+     * 2. Utilisation de Function<T, R> :
+     * Transforme/Mappe chaque patient en un autre type (ex: String de synthèse ou CSV).
+     * Démonstration de l'interface standard java.util.function.Function.
+     *
+     * @param transformateur fonction appliquant la transformation T -> R
+     * @param <R>            le type cible
+     * @return la liste des résultats transformés
+     */
+    public <R> List<R> transformerPatients(Function<Patient, R> transformateur) throws DentalException {
+        List<Patient> tous = obtenirTousLesPatients();
+        List<R> resultat = new ArrayList<>();
+
+        if (transformateur == null) {
+            return resultat;
+        }
+
+        for (Patient p : tous) {
+            // Appel de la méthode SAM de Function : R apply(T t)
+            resultat.add(transformateur.apply(p));
+        }
+        return resultat;
+    }
+
+    /**
+     * 3. Utilisation de Consumer<T> :
+     * Applique une action/effet de bord sur chaque patient (ex: journalisation, notification).
+     * Démonstration de l'interface standard java.util.function.Consumer.
+     *
+     * @param action consommateur effectuant une action sur le patient
+     */
+    public void appliquerSurPatients(Consumer<Patient> action) throws DentalException {
+        if (action == null) {
+            return;
+        }
+        List<Patient> tous = obtenirTousLesPatients();
+        for (Patient p : tous) {
+            // Appel de la méthode SAM de Consumer : void accept(T t)
+            action.accept(p);
+        }
+    }
+
+    /**
+     * 4. Utilisation de Supplier<T> :
+     * Fournit une liste de patients à la demande (alimentation paresseuse ou source externe).
+     * Démonstration de l'interface standard java.util.function.Supplier.
+     *
+     * @param fournisseur fournisseur retournant les données
+     * @return les données obtenues depuis le Supplier
+     */
+    public List<Patient> chargerDepuisFournisseur(Supplier<List<Patient>> fournisseur) {
+        if (fournisseur == null) {
+            return new ArrayList<>();
+        }
+        // Appel de la méthode SAM de Supplier : T get()
+        return fournisseur.get();
     }
 }

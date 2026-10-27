@@ -6,6 +6,7 @@ import dental.model.User;
 import dental.service.PatientService;
 import java.awt.*;
 import java.util.List;
+import java.util.function.Predicate;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
@@ -81,18 +82,42 @@ public class PatientsPanel extends JPanel {
             btnSupprimer.setToolTipText("Droit de suppression réservé aux Dentistes.");
         }
 
+        JButton btnStats = UIUtils.createStyledButton("Synthèse & Stats", UIUtils.COLOR_ACCENT, Color.WHITE);
+        btnStats.addActionListener(e -> onAfficherStats());
+
         btnAjouter.addActionListener(e -> onAjouter());
         btnModifier.addActionListener(e -> onModifier());
         btnSupprimer.addActionListener(e -> onSupprimer());
         btnActualiser.addActionListener(e -> chargerDonnees());
 
+        actionsPanel.add(btnStats);
         actionsPanel.add(btnAjouter);
         actionsPanel.add(btnModifier);
         actionsPanel.add(btnSupprimer);
         actionsPanel.add(btnActualiser);
         topToolbar.add(actionsPanel, BorderLayout.EAST);
 
-        add(topToolbar, BorderLayout.NORTH);
+        // Barre des filtres par Predicate<T> (Step 6)
+        JPanel filterBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
+        filterBar.setOpaque(false);
+        JLabel lblFiltres = new JLabel("Filtres rapides (Predicate<T>) :");
+        lblFiltres.setFont(UIUtils.FONT_SMALL);
+        lblFiltres.setForeground(UIUtils.COLOR_TEXT_MUTED);
+        filterBar.add(lblFiltres);
+
+        ajouterBoutonFiltre(filterBar, "Tous", p -> true);
+        ajouterBoutonFiltre(filterBar, "Seniors (>= 60 ans)", p -> p.getAge() >= 60);
+        ajouterBoutonFiltre(filterBar, "Mineurs (< 18 ans)", p -> p.getAge() < 18);
+        ajouterBoutonFiltre(filterBar, "Avec Mutuelle", p -> p.getMutuelle() != null && !p.getMutuelle().equalsIgnoreCase("Aucune"));
+        ajouterBoutonFiltre(filterBar, "Femmes", p -> "F".equalsIgnoreCase(p.getSexe()));
+        ajouterBoutonFiltre(filterBar, "Hommes", p -> "M".equalsIgnoreCase(p.getSexe()));
+
+        JPanel northContainer = new JPanel(new BorderLayout(0, 8));
+        northContainer.setOpaque(false);
+        northContainer.add(topToolbar, BorderLayout.NORTH);
+        northContainer.add(filterBar, BorderLayout.SOUTH);
+
+        add(northContainer, BorderLayout.NORTH);
 
         // Table des patients stylisée
         String[] colonnes = {"ID", "CIN", "Nom", "Prénom", "Sexe", "Âge", "Téléphone", "Email", "Mutuelle"};
@@ -265,6 +290,37 @@ public class PatientsPanel extends JPanel {
                         JOptionPane.ERROR_MESSAGE);
             }
         }
+    }
+
+    private void ajouterBoutonFiltre(JPanel container, String titre, Predicate<Patient> predicate) {
+        JButton btn = new JButton(titre);
+        btn.setFont(UIUtils.FONT_SMALL);
+        btn.setBackground(Color.WHITE);
+        btn.setForeground(UIUtils.COLOR_PRIMARY);
+        btn.setFocusPainted(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(UIUtils.COLOR_BORDER, 1),
+                BorderFactory.createEmptyBorder(4, 10, 4, 10)
+        ));
+
+        // Utilisation de Predicate<Patient> pour filtrer
+        btn.addActionListener(e -> {
+            try {
+                listeCourante = patientService.filtrerPatients(predicate);
+                mettreAJourTable(listeCourante);
+            } catch (DentalException ex) {
+                JOptionPane.showMessageDialog(this, "Erreur de filtrage : " + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        container.add(btn);
+    }
+
+    private void onAfficherStats() {
+        Frame topFrame = (Frame) SwingUtilities.getWindowAncestor(this);
+        StatsDialog dialog = new StatsDialog(topFrame, patientService);
+        dialog.setVisible(true);
     }
 
     public List<Patient> getListeCourante() {
