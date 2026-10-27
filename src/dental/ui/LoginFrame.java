@@ -1,13 +1,18 @@
 package dental.ui;
 
+import dental.model.User;
+import dental.service.AuthService;
 import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
 /**
  * Fenêtre de connexion principale en Java Swing pur (sans framework).
+ * Étape 1 : Connectée à AuthService pour valider l'héritage (User -> Dentiste / Assistant).
  */
 public class LoginFrame extends JFrame {
+
+    private final AuthService authService;
 
     private JTextField txtLogin;
     private JPasswordField txtPassword;
@@ -16,12 +21,13 @@ public class LoginFrame extends JFrame {
 
     public LoginFrame() {
         super("Cabinet Dentaire - Connexion");
+        this.authService = new AuthService();
         initUI();
     }
 
     private void initUI() {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(450, 420);
+        setSize(450, 440);
         setLocationRelativeTo(null);
         setResizable(false);
         getContentPane().setBackground(UIUtils.COLOR_BACKGROUND);
@@ -55,7 +61,7 @@ public class LoginFrame extends JFrame {
         gbc.insets = new Insets(8, 8, 8, 8);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        JLabel lblLogin = new JLabel("Identifiant / Nom d'utilisateur :");
+        JLabel lblLogin = new JLabel("Identifiant (ex: dentiste ou assistant) :");
         lblLogin.setFont(UIUtils.FONT_BODY_BOLD);
         lblLogin.setForeground(UIUtils.COLOR_TEXT_DARK);
         gbc.gridx = 0;
@@ -64,12 +70,13 @@ public class LoginFrame extends JFrame {
         formCard.add(lblLogin, gbc);
 
         txtLogin = UIUtils.createStyledTextField(20);
+        txtLogin.setText("dentiste");
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.gridwidth = 2;
         formCard.add(txtLogin, gbc);
 
-        JLabel lblPass = new JLabel("Mot de passe :");
+        JLabel lblPass = new JLabel("Mot de passe (ex: admin123 ou pass123) :");
         lblPass.setFont(UIUtils.FONT_BODY_BOLD);
         lblPass.setForeground(UIUtils.COLOR_TEXT_DARK);
         gbc.gridx = 0;
@@ -78,6 +85,7 @@ public class LoginFrame extends JFrame {
         formCard.add(lblPass, gbc);
 
         txtPassword = UIUtils.createStyledPasswordField(20);
+        txtPassword.setText("admin123");
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.gridwidth = 2;
@@ -100,16 +108,16 @@ public class LoginFrame extends JFrame {
         formCard.add(buttonPanel, gbc);
 
         // Conteneur centré pour la carte
-        JPanel centerWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 20));
+        JPanel centerWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 15));
         centerWrapper.setOpaque(false);
         centerWrapper.add(formCard);
         add(centerWrapper, BorderLayout.CENTER);
 
         // Pied de page
-        JLabel lblFooter = new JLabel("Projet Académique - Java Standard & Swing", SwingConstants.CENTER);
+        JLabel lblFooter = new JLabel("Projet Académique - Étape 1 : Héritage (User, Dentiste, Assistant)", SwingConstants.CENTER);
         lblFooter.setFont(UIUtils.FONT_SMALL);
         lblFooter.setForeground(UIUtils.COLOR_TEXT_MUTED);
-        lblFooter.setBorder(new EmptyBorder(10, 10, 15, 10));
+        lblFooter.setBorder(new EmptyBorder(5, 10, 12, 10));
         add(lblFooter, BorderLayout.SOUTH);
 
         // Actions
@@ -132,11 +140,23 @@ public class LoginFrame extends JFrame {
             return;
         }
 
-        // Simule l'authentification de base (sera connectée aux étapes suivantes)
-        JOptionPane.showMessageDialog(this,
-                "Bienvenue " + login + " !\n(Authentification de base initialisée)",
-                "Connexion réussie",
-                JOptionPane.INFORMATION_MESSAGE);
+        // Appel polymorphique : retourne une instance de Dentiste ou Assistant typée en User
+        User utilisateur = authService.authentifier(login, pass);
+
+        if (utilisateur != null) {
+            JOptionPane.showMessageDialog(this,
+                    "Connexion réussie !\n\n"
+                    + "Bienvenue " + utilisateur.getNomComplet() + "\n"
+                    + "Rôle : " + utilisateur.getRole() + "\n"
+                    + "Détails (toString polymorphique) :\n" + utilisateur.toString(),
+                    "Authentification - Démonstration Héritage",
+                    JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(this,
+                    "Identifiant ou mot de passe incorrect.",
+                    "Échec d'authentification",
+                    JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     public JTextField getTxtLogin() {
