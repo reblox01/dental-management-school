@@ -64,7 +64,7 @@ public class MainFrame extends JFrame {
         add(patientsPanel, BorderLayout.CENTER);
 
         // Pied de page
-        JLabel lblFooter = new JLabel("Dental Management - Étape 6 : Interfaces Fonctionnelles Pré-définies (Predicate, Function, Consumer, Supplier)", SwingConstants.CENTER);
+        JLabel lblFooter = new JLabel("Dental Management - Étape 7 : Expressions Lambda, Références de Méthodes (::) & Comparator", SwingConstants.CENTER);
         lblFooter.setFont(UIUtils.FONT_SMALL);
         lblFooter.setForeground(UIUtils.COLOR_TEXT_MUTED);
         lblFooter.setBorder(new EmptyBorder(8, 10, 10, 10));

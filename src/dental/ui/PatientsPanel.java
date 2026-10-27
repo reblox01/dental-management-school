@@ -112,6 +112,36 @@ public class PatientsPanel extends JPanel {
         ajouterBoutonFiltre(filterBar, "Femmes", p -> "F".equalsIgnoreCase(p.getSexe()));
         ajouterBoutonFiltre(filterBar, "Hommes", p -> "M".equalsIgnoreCase(p.getSexe()));
 
+        // Tri avec Comparator<Patient> (Step 7 - Lambdas & Références de Méthodes)
+        JLabel lblTri = new JLabel("  |  Trier (Comparator & ::) :");
+        lblTri.setFont(UIUtils.FONT_SMALL);
+        lblTri.setForeground(UIUtils.COLOR_TEXT_MUTED);
+        filterBar.add(lblTri);
+
+        JComboBox<String> cbTri = new JComboBox<>(new String[]{
+            "Par défaut",
+            "Nom (A -> Z)",
+            "Nom (Z -> A)",
+            "Âge (Croissant)",
+            "Âge (Décroissant)",
+            "CIN"
+        });
+        cbTri.setFont(UIUtils.FONT_SMALL);
+        cbTri.setBackground(Color.WHITE);
+        // Lambda pour la gestion de l'événement de tri
+        cbTri.addActionListener(e -> onChangerTri((String) cbTri.getSelectedItem()));
+        filterBar.add(cbTri);
+
+        // Recherche dynamique en direct via DocumentListener (mise à jour en temps réel)
+        txtRecherche.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            @Override
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { onRechercher(); }
+            @Override
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { onRechercher(); }
+            @Override
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { onRechercher(); }
+        });
+
         JPanel northContainer = new JPanel(new BorderLayout(0, 8));
         northContainer.setOpaque(false);
         northContainer.add(topToolbar, BorderLayout.NORTH);
@@ -321,6 +351,41 @@ public class PatientsPanel extends JPanel {
         Frame topFrame = (Frame) SwingUtilities.getWindowAncestor(this);
         StatsDialog dialog = new StatsDialog(topFrame, patientService);
         dialog.setVisible(true);
+    }
+
+    /**
+     * Trie la liste courante selon le critère choisi en appliquant des lambdas et références de méthodes.
+     */
+    private void onChangerTri(String critere) {
+        if (listeCourante == null || listeCourante.isEmpty() || critere == null) {
+            return;
+        }
+
+        switch (critere) {
+            case "Nom (A -> Z)":
+                // Utilisation de la référence de méthode : Patient::getNom
+                patientService.trierPatients(listeCourante, PatientService.COMPARATEUR_NOM_ASC);
+                break;
+            case "Nom (Z -> A)":
+                // Utilisation du comparateur inversé via .reversed()
+                patientService.trierPatients(listeCourante, PatientService.COMPARATEUR_NOM_DESC);
+                break;
+            case "Âge (Croissant)":
+                // Utilisation d'une lambda expression : (p1, p2) -> ...
+                patientService.trierPatients(listeCourante, PatientService.COMPARATEUR_AGE_ASC);
+                break;
+            case "Âge (Décroissant)":
+                // Utilisation d'une lambda expression inversée
+                patientService.trierPatients(listeCourante, PatientService.COMPARATEUR_AGE_DESC);
+                break;
+            case "CIN":
+                // Utilisation de la référence de méthode : Patient::getCin
+                patientService.trierPatients(listeCourante, PatientService.COMPARATEUR_CIN);
+                break;
+            default:
+                break;
+        }
+        mettreAJourTable(listeCourante);
     }
 
     public List<Patient> getListeCourante() {

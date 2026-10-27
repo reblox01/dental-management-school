@@ -9,6 +9,8 @@ import dental.functional.Validateurs;
 import dental.model.Patient;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -234,5 +236,48 @@ public class PatientService {
         }
         // Appel de la méthode SAM de Supplier : T get()
         return fournisseur.get();
+    }
+
+    // =========================================================================
+    // ÉTAPE 7 : EXPRESSIONS LAMBDA & RÉFÉRENCES DE MÉTHODES (::)
+    // =========================================================================
+
+    /**
+     * Comparateurs illustrant les différentes formes de syntaxes Lambda et de Références de Méthodes :
+     */
+
+    // 1. Référence de méthode de classe (Patient::getNom) avec comparateur insensible à la casse
+    public static final Comparator<Patient> COMPARATEUR_NOM_ASC =
+            Comparator.comparing(Patient::getNom, String.CASE_INSENSITIVE_ORDER);
+
+    // 2. Méthode par défaut .reversed() combinée à la référence de méthode
+    public static final Comparator<Patient> COMPARATEUR_NOM_DESC =
+            COMPARATEUR_NOM_ASC.reversed();
+
+    // 3. Expression lambda à deux paramètres explicites : (p1, p2) -> ...
+    public static final Comparator<Patient> COMPARATEUR_AGE_ASC =
+            (p1, p2) -> Integer.compare(p1.getAge(), p2.getAge());
+
+    // 4. Expression lambda inversée pour l'ordre décroissant
+    public static final Comparator<Patient> COMPARATEUR_AGE_DESC =
+            (p1, p2) -> Integer.compare(p2.getAge(), p1.getAge());
+
+    // 5. Référence de méthode sur le champ CIN : Patient::getCin
+    public static final Comparator<Patient> COMPARATEUR_CIN =
+            Comparator.comparing(Patient::getCin);
+
+    /**
+     * Trie une liste de patients à l'aide d'un Comparator (passé sous forme de lambda ou référence de méthode).
+     *
+     * @param patients    la liste à trier
+     * @param comparateur l'instance fonctionnelle de comparaison
+     * @return la même liste triée sur place
+     */
+    public List<Patient> trierPatients(List<Patient> patients, Comparator<Patient> comparateur) {
+        if (patients != null && comparateur != null) {
+            // Utilisation de la méthode moderne List.sort(...) introduite en Java 8
+            patients.sort(comparateur);
+        }
+        return patients;
     }
 }
