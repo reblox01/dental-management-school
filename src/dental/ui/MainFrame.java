@@ -1,29 +1,33 @@
 package dental.ui;
 
 import dental.model.User;
+import dental.service.PatientService;
 import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
 /**
  * Fenêtre principale de l'application Dental Management.
- * Illustre l'utilisation concrète des méthodes abstraites :
- * - decrireRole() polymorphique
- * - aPrivilege(String) pour contrôler les actions disponibles selon le rôle
+ * Intègre :
+ * - Le bandeau utilisateur avec méthodes abstraites (Step 2)
+ * - Le panneau de gestion des dossiers patients (Step 5 - Interface Fonctionnelle)
  */
 public class MainFrame extends JFrame {
 
     private final User currentUser;
+    private final PatientService patientService;
+    private PatientsPanel patientsPanel;
 
     public MainFrame(User currentUser) {
         super("Cabinet Dentaire - Tableau de Bord (" + (currentUser != null ? currentUser.getRole() : "") + ")");
         this.currentUser = currentUser;
+        this.patientService = new PatientService();
         initUI();
     }
 
     private void initUI() {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(950, 600);
+        setSize(1050, 680);
         setLocationRelativeTo(null);
         getContentPane().setBackground(UIUtils.COLOR_BACKGROUND);
         setLayout(new BorderLayout());
@@ -55,53 +59,16 @@ public class MainFrame extends JFrame {
 
         add(topBar, BorderLayout.NORTH);
 
-        // Panneau central de démonstration
-        JPanel centerPanel = new JPanel();
-        centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
-        centerPanel.setBorder(new EmptyBorder(25, 30, 25, 30));
-        centerPanel.setOpaque(false);
-
-        // Carte d'information du rôle et privilèges
-        JPanel cardInfo = UIUtils.createCardPanel();
-        cardInfo.setLayout(new BorderLayout(15, 15));
-
-        JLabel lblCardTitle = new JLabel("Gestion des Droits & Privilèges (Classe Abstraite 'User')");
-        lblCardTitle.setFont(UIUtils.FONT_SUBTITLE);
-        lblCardTitle.setForeground(UIUtils.COLOR_PRIMARY);
-        cardInfo.add(lblCardTitle, BorderLayout.NORTH);
-
-        JPanel privPanel = new JPanel(new GridLayout(4, 2, 12, 10));
-        privPanel.setOpaque(false);
-
-        ajouterLignePrivilege(privPanel, "Consulter les dossiers patients", "CONSULTER_PATIENTS");
-        ajouterLignePrivilege(privPanel, "Ajouter un nouveau patient", "AJOUTER_PATIENT");
-        ajouterLignePrivilege(privPanel, "Modifier un dossier patient", "MODIFIER_PATIENT");
-        ajouterLignePrivilege(privPanel, "Supprimer un patient (Droit critique)", "SUPPRIMER_PATIENT");
-
-        cardInfo.add(privPanel, BorderLayout.CENTER);
-        centerPanel.add(cardInfo);
-
-        add(centerPanel, BorderLayout.CENTER);
+        // Panneau central : Gestion des patients
+        patientsPanel = new PatientsPanel(currentUser, patientService);
+        add(patientsPanel, BorderLayout.CENTER);
 
         // Pied de page
-        JLabel lblFooter = new JLabel("Dental Management - Étape 2 : Classe Abstraite (Méthodes abstraites polymorphiques)", SwingConstants.CENTER);
+        JLabel lblFooter = new JLabel("Dental Management - Étape 5 : Interface Fonctionnelle (Validateur<T> & andThen())", SwingConstants.CENTER);
         lblFooter.setFont(UIUtils.FONT_SMALL);
         lblFooter.setForeground(UIUtils.COLOR_TEXT_MUTED);
         lblFooter.setBorder(new EmptyBorder(8, 10, 10, 10));
         add(lblFooter, BorderLayout.SOUTH);
-    }
-
-    private void ajouterLignePrivilege(JPanel panel, String libelle, String codePrivilege) {
-        JLabel lbl = new JLabel(libelle);
-        lbl.setFont(UIUtils.FONT_BODY);
-
-        boolean autorise = currentUser != null && currentUser.aPrivilege(codePrivilege);
-        JLabel badge = new JLabel(autorise ? " [ AUTORISÉ ] " : " [ REFUSÉ ] ");
-        badge.setFont(UIUtils.FONT_BODY_BOLD);
-        badge.setForeground(autorise ? UIUtils.COLOR_ACCENT : UIUtils.COLOR_DANGER);
-
-        panel.add(lbl);
-        panel.add(badge);
     }
 
     private void onDeconnexion() {
@@ -121,5 +88,9 @@ public class MainFrame extends JFrame {
 
     public User getCurrentUser() {
         return currentUser;
+    }
+
+    public PatientsPanel getPatientsPanel() {
+        return patientsPanel;
     }
 }
