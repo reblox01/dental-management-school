@@ -1,12 +1,13 @@
 package dental.model;
 
 /**
- * Classe de base représentant un utilisateur du cabinet dentaire.
- * Illustre les principes fondamentaux de la POO :
- * - Encapsulation (attributs privés, accesseurs publics)
- * - Base pour l'héritage (classe mère de Dentiste et Assistant)
+ * Classe abstraite représentant un utilisateur du cabinet dentaire.
+ * Illustre :
+ * - Le mot-clé 'abstract' sur la classe (impossible d'instancier directement avec 'new User')
+ * - La déclaration de méthodes abstraites (sans corps) imposant un contrat aux sous-classes
+ * - Le polymorphisme d'appel sur les méthodes abstraites
  */
-public class User {
+public abstract class User {
 
     private int id;
     private String cin;
@@ -96,23 +97,36 @@ public class User {
     }
 
     /**
-     * Méthode métier retournant le nom complet de l'utilisateur.
+     * Méthode concrète commune : retourne le nom complet.
      */
     public String getNomComplet() {
         return (prenom != null ? prenom : "") + " " + (nom != null ? nom.toUpperCase() : "");
     }
 
     /**
-     * Retourne le rôle de l'utilisateur.
-     * Cette méthode sera redéfinie (override) par les sous-classes.
+     * Méthode abstraite 1 : Oblige chaque sous-classe à fournir
+     * une description détaillée de son rôle au sein du cabinet.
      */
-    public String getRole() {
-        return "UTILISATEUR";
-    }
+    public abstract String decrireRole();
+
+    /**
+     * Méthode abstraite 2 : Oblige chaque sous-classe à définir
+     * son système de permissions et privilèges applicatifs.
+     *
+     * @param privilege le code du privilège à vérifier (ex: "SUPPRIMER_PATIENT")
+     * @return true si l'utilisateur possède ce privilège, false sinon
+     */
+    public abstract boolean aPrivilege(String privilege);
+
+    /**
+     * Méthode abstraite 3 : Retourne le libellé court du rôle.
+     */
+    public abstract String getRole();
 
     @Override
     public String toString() {
         return "User [id=" + id + ", cin=" + cin + ", nomComplet=" + getNomComplet()
-                + ", email=" + email + ", role=" + getRole() + "]";
+                + ", email=" + email + ", role=" + getRole()
+                + ", description=" + decrireRole() + "]";
     }
 }

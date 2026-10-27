@@ -147,10 +147,15 @@ public class LoginFrame extends JFrame {
             JOptionPane.showMessageDialog(this,
                     "Connexion réussie !\n\n"
                     + "Bienvenue " + utilisateur.getNomComplet() + "\n"
-                    + "Rôle : " + utilisateur.getRole() + "\n"
-                    + "Détails (toString polymorphique) :\n" + utilisateur.toString(),
-                    "Authentification - Démonstration Héritage",
+                    + "Rôle : " + utilisateur.getRole() + "\n\n"
+                    + "Description du rôle (méthode abstraite decrireRole()) :\n"
+                    + utilisateur.decrireRole(),
+                    "Authentification - Classe Abstraite",
                     JOptionPane.INFORMATION_MESSAGE);
+
+            // Fermer la fenêtre de login et ouvrir le tableau de bord principal
+            this.dispose();
+            SwingUtilities.invokeLater(() -> new MainFrame(utilisateur).setVisible(true));
         } else {
             JOptionPane.showMessageDialog(this,
                     "Identifiant ou mot de passe incorrect.",

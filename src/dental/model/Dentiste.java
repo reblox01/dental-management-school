@@ -1,12 +1,11 @@
 package dental.model;
 
 /**
- * Sous-classe Dentiste qui hérite de la classe User.
- * Illustre :
- * - Le mot-clé 'extends'
- * - L'appel au constructeur parent via 'super(...)'
- * - L'ajout d'attributs spécifiques ('specialite', 'numeroOrdre')
- * - La redéfinition de méthode (@Override getRole() et toString())
+ * Sous-classe concrète de la classe abstraite User.
+ * Implémente obligatoirement les méthodes abstraites déclarées dans User :
+ * - decrireRole()
+ * - aPrivilege(String)
+ * - getRole()
  */
 public class Dentiste extends User {
 
@@ -19,7 +18,6 @@ public class Dentiste extends User {
 
     public Dentiste(int id, String cin, String nom, String prenom, String email, String telephone,
                     String login, String motDePasse, String specialite, String numeroOrdre) {
-        // Appel explicite au constructeur de la classe mère User
         super(id, cin, nom, prenom, email, telephone, login, motDePasse);
         this.specialite = specialite;
         this.numeroOrdre = numeroOrdre;
@@ -41,17 +39,36 @@ public class Dentiste extends User {
         this.numeroOrdre = numeroOrdre;
     }
 
-    /**
-     * Redéfinition (Override) de la méthode getRole() de la classe mère User.
-     */
     @Override
     public String getRole() {
         return "DENTISTE";
     }
 
+    /**
+     * Implémentation concrète de la méthode abstraite decrireRole().
+     */
+    @Override
+    public String decrireRole() {
+        return "Chirurgien-Dentiste (Spécialité : " + (specialite != null ? specialite : "Généraliste")
+                + ", N° Ordre : " + (numeroOrdre != null ? numeroOrdre : "N/A")
+                + ") - Responsable des diagnostics, actes chirurgicaux et prescriptions.";
+    }
+
+    /**
+     * Implémentation concrète de la méthode abstraite aPrivilege(String).
+     * Le praticien dentiste possède tous les droits d'administration médicale.
+     */
+    @Override
+    public boolean aPrivilege(String privilege) {
+        if (privilege == null) {
+            return false;
+        }
+        // Le dentiste a un accès complet à toutes les fonctionnalités
+        return true;
+    }
+
     @Override
     public String toString() {
-        // Réutilisation de la méthode toString() du parent via 'super.toString()'
         return super.toString() + " - Dentiste [specialite=" + specialite + ", numeroOrdre=" + numeroOrdre + "]";
     }
 }
