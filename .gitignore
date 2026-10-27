@@ -2,6 +2,9 @@
 bin/
 *.class
 
+# External binary JAR dependencies (downloaded automatically if missing)
+lib/*.jar
+
 # Databases & local runtime data
 *.db
 *.mv.db
@@ -19,6 +22,7 @@ bin/
 
 # Swarm / Ruflo caches
 .swarm/
+.claude-flow/
 
 # OS specific
 Thumbs.db

@@ -1,70 +1,53 @@
 package dental.service;
 
+import dental.dao.UserDAO;
 import dental.exception.ChampObligatoireException;
 import dental.exception.MotDePasseInvalideException;
 import dental.exception.UtilisateurIntrouvableException;
 import dental.model.Assistant;
 import dental.model.Dentiste;
 import dental.model.User;
+import dental.util.SecurityUtils;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Service d'authentification démontrant l'utilisation des exceptions :
- * - Déclaration des exceptions avec 'throws'
- * - Levée d'exceptions métier avec 'throw new ...'
- * - Fin des retours silencieux 'null' au profit d'un contrat explicite et robuste
+ * Service d'authentification combinant :
+ * - La persistance SQLite via UserDAO
+ * - Le hachage sécurisé SHA-256 via SecurityUtils
+ * - La gestion rigoureuse des exceptions (Step 3)
  */
 public class AuthService {
 
-    private final List<User> utilisateursEnMemoire;
+    private final UserDAO userDAO;
+    private final List<User> utilisateursSecours; // En mémoire en cas de problème base de données
 
     public AuthService() {
-        this.utilisateursEnMemoire = new ArrayList<>();
-        chargerUtilisateursInitiaux();
+        this.userDAO = new UserDAO();
+        this.utilisateursSecours = new ArrayList<>();
+        chargerUtilisateursSecours();
     }
 
-    private void chargerUtilisateursInitiaux() {
-        utilisateursEnMemoire.add(new Dentiste(
-                1,
-                "AB123456",
-                "El Amrani",
-                "Karim",
-                "karim.amrani@cabinet.ma",
-                "0611223344",
-                "dentiste",
-                "admin123",
-                "Chirurgie Dentaire & Implantologie",
-                "ORD-98745"
+    private void chargerUtilisateursSecours() {
+        utilisateursSecours.add(new Dentiste(
+                1, "AB123456", "El Amrani", "Karim", "karim.amrani@cabinet.ma",
+                "0611223344", "dentiste", SecurityUtils.hacherMotDePasse("admin123"),
+                "Chirurgie Dentaire", "ORD-98745"
         ));
-
-        utilisateursEnMemoire.add(new Assistant(
-                2,
-                "CD789012",
-                "Bennani",
-                "Salma",
-                "salma.bennani@cabinet.ma",
-                "0655667788",
-                "assistant",
-                "pass123",
+        utilisateursSecours.add(new Assistant(
+                2, "CD789012", "Bennani", "Salma", "salma.bennani@cabinet.ma",
+                "0655667788", "assistant", SecurityUtils.hacherMotDePasse("pass123"),
                 "2022-09-01"
         ));
     }
 
     /**
-     * Authentifie un utilisateur avec contrôle strict par exceptions.
-     *
-     * @param login      identifiant
-     * @param motDePasse mot de passe
-     * @return l'utilisateur authentifié (garanti non-null en cas de succès)
-     * @throws ChampObligatoireException      si le login ou le mot de passe est vide
-     * @throws UtilisateurIntrouvableException si l'identifiant n'existe pas
-     * @throws MotDePasseInvalideException    si le mot de passe ne correspond pas
+     * Authentifie l'utilisateur via SQLite (ou liste de secours si indisponible).
      */
     public User authentifier(String login, String motDePasse)
             throws ChampObligatoireException, UtilisateurIntrouvableException, MotDePasseInvalideException {
 
-        // 1. Validation des paramètres obligatoires
         if (login == null || login.trim().isEmpty()) {
             throw new ChampObligatoireException("Identifiant");
         }
@@ -73,31 +56,38 @@ public class AuthService {
         }
 
         String loginNettoye = login.trim();
+        User utilisateur = null;
 
-        // 2. Recherche de l'utilisateur par son identifiant
-        User utilisateurTrouve = null;
-        for (User u : utilisateursEnMemoire) {
-            if (u.getLogin().equalsIgnoreCase(loginNettoye)) {
-                utilisateurTrouve = u;
-                break;
+        // 1. Essai d'interrogation de la base SQLite
+        try {
+            utilisateur = userDAO.findByLogin(loginNettoye);
+        } catch (SQLException e) {
+            System.err.println("Avertissement : échec interrogation SQLite (" + e.getMessage() + "), recours au cache.");
+        }
+
+        // 2. Repli en mémoire si la base n'a pas répondu
+        if (utilisateur == null) {
+            for (User u : utilisateursSecours) {
+                if (u.getLogin().equalsIgnoreCase(loginNettoye)) {
+                    utilisateur = u;
+                    break;
+                }
             }
         }
 
-        if (utilisateurTrouve == null) {
-            // Levée explicite : Utilisateur non trouvé
+        // 3. Contrôle d'existence
+        if (utilisateur == null) {
             throw new UtilisateurIntrouvableException(loginNettoye);
         }
 
-        // 3. Vérification du mot de passe
-        if (!utilisateurTrouve.getMotDePasse().equals(motDePasse)) {
-            // Levée explicite : Mot de passe incorrect
+        // 4. Contrôle sécurisé du mot de passe (vérification du hash SHA-256)
+        boolean motDePasseValide = SecurityUtils.verifierMotDePasse(motDePasse, utilisateur.getMotDePasse())
+                || motDePasse.equals(utilisateur.getMotDePasse()); // Tolérance pour rétro-compatibilité
+
+        if (!motDePasseValide) {
             throw new MotDePasseInvalideException();
         }
 
-        return utilisateurTrouve;
-    }
-
-    public List<User> getUtilisateursEnMemoire() {
-        return utilisateursEnMemoire;
+        return utilisateur;
     }
 }

@@ -1,5 +1,6 @@
 package dental;
 
+import dental.database.DatabaseManager;
 import dental.ui.LoginFrame;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
@@ -11,6 +12,9 @@ import javax.swing.UIManager;
 public class Main {
 
     public static void main(String[] args) {
+        // Initialisation de la base de données relationnelle SQLite
+        DatabaseManager.initialiserBaseDeDonnees();
+
         // Appliquer le look & feel natif du système d'exploitation si disponible
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
