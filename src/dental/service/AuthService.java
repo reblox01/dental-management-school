@@ -1,5 +1,8 @@
 package dental.service;
 
+import dental.exception.ChampObligatoireException;
+import dental.exception.MotDePasseInvalideException;
+import dental.exception.UtilisateurIntrouvableException;
 import dental.model.Assistant;
 import dental.model.Dentiste;
 import dental.model.User;
@@ -7,12 +10,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Service d'authentification démontrant l'héritage et le polymorphisme.
- * Une liste hétérogène List<User> contient à la fois des instances de Dentiste et d'Assistant.
+ * Service d'authentification démontrant l'utilisation des exceptions :
+ * - Déclaration des exceptions avec 'throws'
+ * - Levée d'exceptions métier avec 'throw new ...'
+ * - Fin des retours silencieux 'null' au profit d'un contrat explicite et robuste
  */
 public class AuthService {
 
-    // Liste polymorphique contenant des objets de type User (Dentiste et Assistant)
     private final List<User> utilisateursEnMemoire;
 
     public AuthService() {
@@ -20,11 +24,7 @@ public class AuthService {
         chargerUtilisateursInitiaux();
     }
 
-    /**
-     * Initialise des utilisateurs de test illustrant l'héritage.
-     */
     private void chargerUtilisateursInitiaux() {
-        // Ajout d'une instance de Dentiste (sous-classe de User)
         utilisateursEnMemoire.add(new Dentiste(
                 1,
                 "AB123456",
@@ -38,7 +38,6 @@ public class AuthService {
                 "ORD-98745"
         ));
 
-        // Ajout d'une instance d'Assistant (sous-classe de User)
         utilisateursEnMemoire.add(new Assistant(
                 2,
                 "CD789012",
@@ -53,24 +52,49 @@ public class AuthService {
     }
 
     /**
-     * Authentifie un utilisateur à partir de son login et de son mot de passe.
-     * Démonstration du polymorphisme : la méthode manipule la référence générique 'User'.
+     * Authentifie un utilisateur avec contrôle strict par exceptions.
      *
-     * @param login       l'identifiant saisi
-     * @param motDePasse  le mot de passe saisi
-     * @return l'instance de User (Dentiste ou Assistant), ou null si échec
+     * @param login      identifiant
+     * @param motDePasse mot de passe
+     * @return l'utilisateur authentifié (garanti non-null en cas de succès)
+     * @throws ChampObligatoireException      si le login ou le mot de passe est vide
+     * @throws UtilisateurIntrouvableException si l'identifiant n'existe pas
+     * @throws MotDePasseInvalideException    si le mot de passe ne correspond pas
      */
-    public User authentifier(String login, String motDePasse) {
-        if (login == null || motDePasse == null) {
-            return null;
+    public User authentifier(String login, String motDePasse)
+            throws ChampObligatoireException, UtilisateurIntrouvableException, MotDePasseInvalideException {
+
+        // 1. Validation des paramètres obligatoires
+        if (login == null || login.trim().isEmpty()) {
+            throw new ChampObligatoireException("Identifiant");
+        }
+        if (motDePasse == null || motDePasse.isEmpty()) {
+            throw new ChampObligatoireException("Mot de passe");
         }
 
+        String loginNettoye = login.trim();
+
+        // 2. Recherche de l'utilisateur par son identifiant
+        User utilisateurTrouve = null;
         for (User u : utilisateursEnMemoire) {
-            if (u.getLogin().equalsIgnoreCase(login.trim()) && u.getMotDePasse().equals(motDePasse)) {
-                return u; // Polymorphisme : l'objet retourné est concrètement un Dentiste ou un Assistant
+            if (u.getLogin().equalsIgnoreCase(loginNettoye)) {
+                utilisateurTrouve = u;
+                break;
             }
         }
-        return null;
+
+        if (utilisateurTrouve == null) {
+            // Levée explicite : Utilisateur non trouvé
+            throw new UtilisateurIntrouvableException(loginNettoye);
+        }
+
+        // 3. Vérification du mot de passe
+        if (!utilisateurTrouve.getMotDePasse().equals(motDePasse)) {
+            // Levée explicite : Mot de passe incorrect
+            throw new MotDePasseInvalideException();
+        }
+
+        return utilisateurTrouve;
     }
 
     public List<User> getUtilisateursEnMemoire() {

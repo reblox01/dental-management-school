@@ -1,5 +1,8 @@
 package dental.ui;
 
+import dental.exception.ChampObligatoireException;
+import dental.exception.MotDePasseInvalideException;
+import dental.exception.UtilisateurIntrouvableException;
 import dental.model.User;
 import dental.service.AuthService;
 import java.awt.*;
@@ -114,7 +117,7 @@ public class LoginFrame extends JFrame {
         add(centerWrapper, BorderLayout.CENTER);
 
         // Pied de page
-        JLabel lblFooter = new JLabel("Projet Académique - Étape 1 : Héritage (User, Dentiste, Assistant)", SwingConstants.CENTER);
+        JLabel lblFooter = new JLabel("Projet Académique - Étape 3 : Exceptions & Gestion try-catch-finally", SwingConstants.CENTER);
         lblFooter.setFont(UIUtils.FONT_SMALL);
         lblFooter.setForeground(UIUtils.COLOR_TEXT_MUTED);
         lblFooter.setBorder(new EmptyBorder(5, 10, 12, 10));
@@ -132,35 +135,68 @@ public class LoginFrame extends JFrame {
         String login = txtLogin.getText().trim();
         String pass = new String(txtPassword.getPassword());
 
-        if (login.isEmpty() || pass.isEmpty()) {
-            JOptionPane.showMessageDialog(this,
-                    "Veuillez renseigner tous les champs.",
-                    "Champs manquants",
-                    JOptionPane.WARNING_MESSAGE);
-            return;
-        }
+        // Désactiver le bouton pendant le traitement pour éviter les doubles clics
+        btnConnexion.setEnabled(false);
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
-        // Appel polymorphique : retourne une instance de Dentiste ou Assistant typée en User
-        User utilisateur = authService.authentifier(login, pass);
+        try {
+            // Démonstration du bloc TRY : appel d'une méthode déclarant des exceptions contrôlées
+            User utilisateur = authService.authentifier(login, pass);
 
-        if (utilisateur != null) {
             JOptionPane.showMessageDialog(this,
                     "Connexion réussie !\n\n"
                     + "Bienvenue " + utilisateur.getNomComplet() + "\n"
                     + "Rôle : " + utilisateur.getRole() + "\n\n"
                     + "Description du rôle (méthode abstraite decrireRole()) :\n"
                     + utilisateur.decrireRole(),
-                    "Authentification - Classe Abstraite",
+                    "Authentification Réussie",
                     JOptionPane.INFORMATION_MESSAGE);
 
-            // Fermer la fenêtre de login et ouvrir le tableau de bord principal
+            // Ouvrir le tableau de bord principal
             this.dispose();
             SwingUtilities.invokeLater(() -> new MainFrame(utilisateur).setVisible(true));
-        } else {
+
+        } catch (ChampObligatoireException e) {
+            // CATCH 1 : Gestion spécifique d'un champ requis manquant
             JOptionPane.showMessageDialog(this,
-                    "Identifiant ou mot de passe incorrect.",
-                    "Échec d'authentification",
+                    e.getMessage(),
+                    "Champs Requis",
+                    JOptionPane.WARNING_MESSAGE);
+            if (login.isEmpty()) {
+                txtLogin.requestFocus();
+            } else {
+                txtPassword.requestFocus();
+            }
+
+        } catch (UtilisateurIntrouvableException e) {
+            // CATCH 2 : Gestion spécifique d'un identifiant inexistant
+            JOptionPane.showMessageDialog(this,
+                    e.getMessage() + "\n\nVérifiez l'orthographe de votre identifiant.",
+                    "Utilisateur Inconnu",
                     JOptionPane.ERROR_MESSAGE);
+            txtLogin.requestFocus();
+            txtLogin.selectAll();
+
+        } catch (MotDePasseInvalideException e) {
+            // CATCH 3 : Gestion spécifique d'un mot de passe incorrect
+            JOptionPane.showMessageDialog(this,
+                    e.getMessage() + "\n\nVeuillez ressaisir votre mot de passe.",
+                    "Erreur d'Authentification",
+                    JOptionPane.ERROR_MESSAGE);
+            txtPassword.setText("");
+            txtPassword.requestFocus();
+
+        } catch (Exception e) {
+            // CATCH 4 : Capture générique en dernier recours (bonne pratique)
+            JOptionPane.showMessageDialog(this,
+                    "Une erreur inattendue est survenue : " + e.getMessage(),
+                    "Erreur Système",
+                    JOptionPane.ERROR_MESSAGE);
+
+        } finally {
+            // FINALLY : Toujours exécuté, avec ou sans exception (nettoyage des ressources & état)
+            btnConnexion.setEnabled(true);
+            setCursor(Cursor.getDefaultCursor());
         }
     }
 
