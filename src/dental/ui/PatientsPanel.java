@@ -4,6 +4,7 @@ import dental.exception.DentalException;
 import dental.model.Patient;
 import dental.model.User;
 import dental.service.PatientService;
+import dental.util.InputSanitizer;
 import java.awt.*;
 import java.util.List;
 import java.util.function.Predicate;
@@ -212,7 +213,8 @@ public class PatientsPanel extends JPanel {
     }
 
     private void onRechercher() {
-        String motCle = txtRecherche.getText().trim();
+        // Step 8 — Sanitisation de la saisie de recherche (@securly)
+        String motCle = InputSanitizer.nettoyer(txtRecherche.getText(), 50);
         try {
             listeCourante = patientService.rechercherPatients(motCle);
             mettreAJourTable(listeCourante);

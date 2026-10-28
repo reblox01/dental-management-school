@@ -5,6 +5,7 @@ import dental.exception.MotDePasseInvalideException;
 import dental.exception.UtilisateurIntrouvableException;
 import dental.model.User;
 import dental.service.AuthService;
+import dental.util.InputSanitizer;
 import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -117,7 +118,7 @@ public class LoginFrame extends JFrame {
         add(centerWrapper, BorderLayout.CENTER);
 
         // Pied de page
-        JLabel lblFooter = new JLabel("Projet Académique - Étape 3 : Exceptions & Gestion try-catch-finally", SwingConstants.CENTER);
+        JLabel lblFooter = new JLabel("Projet Académique - Étape 8 : Sécurité (InputSanitizer, SHA-256, PreparedStatement)", SwingConstants.CENTER);
         lblFooter.setFont(UIUtils.FONT_SMALL);
         lblFooter.setForeground(UIUtils.COLOR_TEXT_MUTED);
         lblFooter.setBorder(new EmptyBorder(5, 10, 12, 10));
@@ -132,8 +133,20 @@ public class LoginFrame extends JFrame {
     }
 
     private void onConnexion() {
-        String login = txtLogin.getText().trim();
+        // Step 8 — Sanitisation des entrées (@securly)
+        String login = InputSanitizer.nettoyer(txtLogin.getText(), 50);
         String pass = new String(txtPassword.getPassword());
+
+        // Détection préventive d'injection (défense en profondeur)
+        if (InputSanitizer.contientInjection(login)) {
+            JOptionPane.showMessageDialog(this,
+                    "Caractères suspects détectés dans l'identifiant.\nSaisie rejetée pour des raisons de sécurité.",
+                    "Alerte de Sécurité",
+                    JOptionPane.ERROR_MESSAGE);
+            txtLogin.setText("");
+            txtLogin.requestFocus();
+            return;
+        }
 
         // Désactiver le bouton pendant le traitement pour éviter les doubles clics
         btnConnexion.setEnabled(false);

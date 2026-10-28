@@ -3,6 +3,7 @@ package dental.ui;
 import dental.exception.ValidationException;
 import dental.model.Patient;
 import dental.service.PatientService;
+import dental.util.InputSanitizer;
 import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -139,16 +140,29 @@ public class PatientDialog extends JDialog {
     }
 
     private void onEnregistrer() {
-        String cin = txtCin.getText().trim();
-        String nom = txtNom.getText().trim();
-        String prenom = txtPrenom.getText().trim();
-        String sexe = (String) cbSexe.getSelectedItem();
+        // Step 8 — Sanitisation des entrées (@securly) avant toute validation métier
+        String cin = InputSanitizer.nettoyer(txtCin.getText(), 20);
+        String nom = InputSanitizer.nettoyer(txtNom.getText(), 50);
+        String prenom = InputSanitizer.nettoyer(txtPrenom.getText(), 50);
+        String sexe = (String) cbSexe.getSelectedItem(); // liste déroulante : valeur contrôlée
         int age = (Integer) spAge.getValue();
-        String tel = txtTelephone.getText().trim();
-        String email = txtEmail.getText().trim();
-        String adresse = txtAdresse.getText().trim();
-        String mutuelle = (String) cbMutuelle.getSelectedItem();
-        String antecedents = txtAntecedents.getText().trim();
+        String tel = InputSanitizer.nettoyer(txtTelephone.getText(), 20);
+        String email = InputSanitizer.nettoyer(txtEmail.getText(), 100);
+        String adresse = InputSanitizer.nettoyer(txtAdresse.getText(), 200);
+        String mutuelle = (String) cbMutuelle.getSelectedItem(); // liste déroulante : valeur contrôlée
+        String antecedents = InputSanitizer.nettoyer(txtAntecedents.getText(), 300);
+
+        // Détection préventive d'injection (défense en profondeur, même logique que LoginFrame)
+        String[] champsSensibles = {cin, nom, prenom, tel, email, adresse, antecedents};
+        for (String champ : champsSensibles) {
+            if (InputSanitizer.contientInjection(champ)) {
+                JOptionPane.showMessageDialog(this,
+                        "Caractères suspects détectés dans le formulaire.\nSaisie rejetée pour des raisons de sécurité.",
+                        "Alerte de Sécurité",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        }
 
         Patient p = (patientExistant == null)
                 ? new Patient(cin, nom, prenom, sexe, age, tel, email, adresse, mutuelle, antecedents)
