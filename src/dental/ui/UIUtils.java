@@ -1,6 +1,8 @@
 package dental.ui;
 
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
@@ -37,18 +39,42 @@ public final class UIUtils {
 
     /**
      * Crée un bouton stylisé avec coins propres et padding.
+     * Sous le Look & Feel système (Windows), setBackground() seul est ignoré :
+     * le delegate de rendu peint son propre fond. On force donc la peinture
+     * manuelle avec setContentAreaFilled(false) + setOpaque(true).
      */
     public static JButton createStyledButton(String text, Color bg, Color fg) {
         JButton button = new JButton(text);
         button.setFont(FONT_BODY_BOLD);
+
+        // Rendu du fond personnalisé (correction du bug "bouton invisible")
+        button.setContentAreaFilled(false);
+        button.setOpaque(true);
         button.setBackground(bg);
         button.setForeground(fg);
         button.setFocusPainted(false);
         button.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(bg.darker(), 1, true),
+                BorderFactory.createLineBorder(bg.darker(), 1),
                 BorderFactory.createEmptyBorder(8, 16, 8, 16)
         ));
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        // Effet de survol simple (MouseListener — Java standard)
+        button.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                if (button.isEnabled()) {
+                    button.setBackground(bg.darker());
+                }
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                if (button.isEnabled()) {
+                    button.setBackground(bg);
+                }
+            }
+        });
         return button;
     }
 
