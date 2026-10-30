@@ -73,7 +73,18 @@ public class StatsDialog extends JDialog {
 
     private void calculerEtAfficher() {
         try {
-            List<Patient> tous = patientService.obtenirTousLesPatients();
+            // 4. Utilisation de Supplier<List<Patient>> : le service appelle fournisseur.get()
+            // à la demande. La méthode SAM get() du Supplier ne pouvant pas propager
+            // d'exception vérifiée, le lambda adaptateur capture DentalException
+            // (checked) et la traduit en IllegalStateException (unchecked) avec le
+            // même message — la boîte d'erreur affichée reste identique.
+            List<Patient> tous = patientService.chargerDepuisFournisseur(() -> {
+                try {
+                    return patientService.obtenirTousLesPatients();
+                } catch (DentalException e) {
+                    throw new IllegalStateException(e.getMessage(), e);
+                }
+            });
 
             // 1. Définition d'expressions lambda compatibles avec Predicate<Patient>
             Predicate<Patient> estHomme = p -> "M".equalsIgnoreCase(p.getSexe());
@@ -156,6 +167,13 @@ public class StatsDialog extends JDialog {
                     JOptionPane.INFORMATION_MESSAGE);
 
         } catch (DentalException e) {
+            JOptionPane.showMessageDialog(this,
+                    "Erreur : " + e.getMessage(),
+                    "Erreur",
+                    JOptionPane.ERROR_MESSAGE);
+        } catch (IllegalStateException e) {
+            // Traduction de l'exception vérifiée capturée dans le Supplier (voir plus haut) :
+            // même boîte d'erreur que pour une DentalException directe.
             JOptionPane.showMessageDialog(this,
                     "Erreur : " + e.getMessage(),
                     "Erreur",
